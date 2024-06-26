@@ -9,6 +9,7 @@
     "dev": "tsc-watch --onSuccess \"npm run start\""
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "tsc-watch": "^6.2.0",
