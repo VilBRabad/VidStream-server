@@ -15,20 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const UserSchema = new mongoose_1.default.Schema({
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const userSchema = new mongoose_1.default.Schema({
     firstName: {
         type: String,
-        lowercase: true
+        lowercase: true,
     },
     lastName: {
         type: String,
-        lowercase: true
+        lowercase: true,
     },
     email: {
         type: String,
         unique: true,
         required: true,
-        trim: true
+        trim: true,
     },
     password: {
         type: String,
@@ -44,26 +45,44 @@ const UserSchema = new mongoose_1.default.Schema({
     watchList: [
         {
             type: mongoose_1.default.Types.ObjectId,
-            ref: "Video"
-        }
+            ref: "Video",
+        },
     ],
     refreshToken: {
-        type: String
-    }
+        type: String,
+    },
 }, { timestamps: true });
-UserSchema.pre("save", function (next) {
+userSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!this.isModified("password")) {
-            console.log(1.3);
             return next();
         }
         this.password = yield bcrypt_1.default.hash(this.password, 10);
         return next();
     });
 });
-UserSchema.methods.isPasswordCorrect = function (password) {
+userSchema.methods.isPasswordCorrect = function (password) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield bcrypt_1.default.compare(password, this.password);
     });
 };
-exports.User = mongoose_1.default.model("User", UserSchema);
+userSchema.methods.generateAccessToken = function () {
+    return __awaiter(this, void 0, void 0, function* () {
+        return jsonwebtoken_1.default.sign({
+            _id: this._id,
+            email: this.email
+        }, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        });
+    });
+};
+userSchema.methods.generateRefreshToken = function () {
+    return __awaiter(this, void 0, void 0, function* () {
+        return jsonwebtoken_1.default.sign({
+            _id: this._id
+        }, process.env.REFRESH_TOKEN_SECRET, {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        });
+    });
+};
+exports.User = mongoose_1.default.model("User", userSchema);

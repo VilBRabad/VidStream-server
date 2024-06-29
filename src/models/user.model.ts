@@ -1,57 +1,98 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-const UserSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        lowercase: true
-    },
-    lastName: {
-        type: String,
-        lowercase: true
-    },
-    email: {
-        type: String,
-        unique: true,
-        required: true,
-        trim: true
-    },
-    password: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    watchHistory: [
-        {
-            type: mongoose.Types.ObjectId,
-            ref: "Video",
-        },
-    ],
-    watchList: [
-        {
-            type: mongoose.Types.ObjectId,
-            ref: "Video"
-        }
-    ],
-    refreshToken: {
-        type: String
-    }
-}, {timestamps: true});
-
-
-UserSchema.pre("save", async function(next){
-    if(!this.isModified("password")){
-        console.log(1.3);
-        return next();
-    }
-    
-    this.password = await bcrypt.hash(this.password, 10);
-    return next();
-})
-
-
-UserSchema.methods.isPasswordCorrect = async function(password:string){
-    return await bcrypt.compare(password, this.password);
+export interface IUser extends Document {
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  password: string;
+  watchHistory?: mongoose.Types.ObjectId[];
+  watchList?: mongoose.Types.ObjectId[];
+  refreshToken?: string;
+  isPasswordCorrect(password: string): Promise<boolean>;
+  generateAccessToken(): Promise<string>;
+  generateRefreshToken(): Promise<string>;
 }
 
-export const User = mongoose.model("User", UserSchema);
+const userSchema = new mongoose.Schema<IUser>({
+  firstName: {
+    type: String,
+    lowercase: true,
+  },
+  lastName: {
+    type: String,
+    lowercase: true,
+  },
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  watchHistory: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Video",
+    },
+  ],
+  watchList: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Video",
+    },
+  ],
+  refreshToken: {
+    type: String,
+  },
+}, { timestamps: true });
+
+
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+
+  this.password = await bcrypt.hash(this.password, 10);
+  return next();
+});
+
+userSchema.methods.isPasswordCorrect = async function (password: string) {
+  return await bcrypt.compare(password, this.password);
+};
+
+
+userSchema.methods.generateAccessToken = async function(){
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email
+        },
+        process.env.ACCESS_TOKEN_SECRET as string,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
+
+
+userSchema.methods.generateRefreshToken = async function(){
+    return jwt.sign(
+        {
+            _id: this._id
+        },
+        process.env.REFRESH_TOKEN_SECRET as string,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
+
+
+export const User = mongoose.model<IUser>("User", userSchema);
