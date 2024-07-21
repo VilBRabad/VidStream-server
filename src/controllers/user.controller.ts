@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { Response, Request } from "express";
-import { User } from "../models/user.model";
+import { IUser, User } from "../models/user.model";
 import { ApiResponse } from "../utils/ApiResponse";
 
 interface userInformation{
@@ -11,13 +11,14 @@ interface userInformation{
     password: string;
 }
 
+const options = {
+    httpOnly: true,
+    secure: true,
+    path: '/',
+}
 
-const generateAccessRefreshToken = async(userId: string)=>{
+const generateAccessRefreshToken = async(user: IUser)=>{
     try {
-        const user = await User.findOne({_id: userId});
-        
-        if(!user) throw new ApiError(400, "Unable to find user");
-
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
         user.refreshToken = refreshToken;
@@ -32,12 +33,13 @@ const generateAccessRefreshToken = async(userId: string)=>{
 
 
 const registerUser = asyncHandler(async(req: Request<{}, {}, userInformation>, res: Response)=>{
-    const { firstName, lastName, email, password } = req.body;
+    const { email, password } = req.body;
 
     
-    if([firstName, lastName, email, password].some((fields)=> fields.trim()==="")){
+    if([email, password].some((fields)=> fields.trim()==="")){
         throw new ApiError(400, "All fields required");
     }
+    
     
     console.log(req.body);
     const existUser = await User.findOne({email})
@@ -45,8 +47,6 @@ const registerUser = asyncHandler(async(req: Request<{}, {}, userInformation>, r
     if(existUser) throw new ApiError(402, "User already exists");
     
     const user = await User.create({
-        firstName: firstName,
-        lastName: lastName,
         email: email,
         password: password
     })
@@ -61,35 +61,41 @@ const registerUser = asyncHandler(async(req: Request<{}, {}, userInformation>, r
 })
 
 const loginUser = asyncHandler(async(req:Request, res: Response)=>{
-    try {
-        const {email, password} = req.body;
-        if(email == "" || password == "") throw new ApiError(400, "Email or password required!");
-    
-        const user = await User.findOne({email});
-        if(!user) throw new ApiError(404, "User Not Found");
-    
-        const isPasswordValid = await user.isPasswordCorrect(password);
-        if(!isPasswordValid) throw new ApiError(402, "Invalid Passwoord!");
-    
-        const {accessToken, refreshToken} = await generateAccessRefreshToken(user._id as string);
-        
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
-    
-        res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(200, {}, "Login successfully")
-        )
-    } catch (error) {
-        throw new ApiError(400, "Server Error");
-    }
+
+    const {email, password} = req.body;
+    if(email == "" || password == "") throw new ApiError(400, "Email or password required!");
+
+    const existUser = await User.findOne({email});
+    if(!existUser) throw new ApiError(404, "User Not Found");
+
+    const isPasswordValid = await existUser.isPasswordCorrect(password);
+    if(!isPasswordValid) throw new ApiError(402, "Invalid Passwoord!");
+
+    const {accessToken, refreshToken} = await generateAccessRefreshToken(existUser);
+
+    const user = {
+        _id: existUser._id,
+        email: existUser.email,
+    };
+
+    return res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(200, user, "Login successfully")
+    )
 })
 
 
+
+const logOutUser = asyncHandler(async(req:Request, res:Response)=>{
+    return res.status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+        new ApiResponse(200, {}, "logout successfully")
+    );
+})
 
 
 //! JWT Verification Test Handler
@@ -104,5 +110,5 @@ const testJWTAuth = asyncHandler(async(req:Request, res:Response)=>{
 })
 
 
-export { registerUser, loginUser, testJWTAuth };
+export { registerUser, loginUser, logOutUser, testJWTAuth };
 

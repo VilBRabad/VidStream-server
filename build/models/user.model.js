@@ -17,14 +17,6 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userSchema = new mongoose_1.default.Schema({
-    firstName: {
-        type: String,
-        lowercase: true,
-    },
-    lastName: {
-        type: String,
-        lowercase: true,
-    },
     email: {
         type: String,
         unique: true,

@@ -20,4 +20,4 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express_1.default.json({ limit: "16kb" }));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
-app.use("/api/v1", user_routes_1.default);
+app.use("/api/v1/user", user_routes_1.default);

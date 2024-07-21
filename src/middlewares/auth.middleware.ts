@@ -10,21 +10,18 @@ interface jwtInterface extends jwt.JwtPayload{
 }
 
 const verifyJWT = asyncHandler(async(req:Request, res:Response, next: NextFunction)=>{
-    try {
-        const token = req.cookies.accessToken || req.headers.authorization?.replace("Bearer ", "");
 
-        if(!token) throw new ApiError(402, "Un-authorized request!");
+    const token = req.cookies.accessToken || req.headers.authorization?.replace("Bearer ", "");
 
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtInterface;
+    if(!token) throw new ApiError(402, "Un-authorized request!");
 
-        // console.log(decodedToken._id);
-        const user = await User.findOne({_id: decodedToken._id});
-        if(!user) throw new ApiError(401, "Unable to find user, Please login again..");
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtInterface;
 
-        next();
-    } catch (error) {
-        throw new ApiError(400, "Server error");
-    }
+    // console.log(decodedToken._id);
+    const user = await User.findOne({_id: decodedToken._id});
+    if(!user) throw new ApiError(401, "Unable to find user, Please login again..");
+
+    next();
 })
 
 export default verifyJWT;

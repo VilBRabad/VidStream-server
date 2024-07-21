@@ -4,7 +4,7 @@ exports.asyncHandler = void 0;
 const asyncHandler = (fn) => {
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next))
-            .catch((err) => next(err));
+            .catch(next);
     };
 };
 exports.asyncHandler = asyncHandler;

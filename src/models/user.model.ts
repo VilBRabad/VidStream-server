@@ -3,8 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export interface IUser extends Document {
-  firstName?: string;
-  lastName?: string;
   email: string;
   password: string;
   watchHistory?: mongoose.Types.ObjectId[];
@@ -16,14 +14,6 @@ export interface IUser extends Document {
 }
 
 const userSchema = new mongoose.Schema<IUser>({
-  firstName: {
-    type: String,
-    lowercase: true,
-  },
-  lastName: {
-    type: String,
-    lowercase: true,
-  },
   email: {
     type: String,
     unique: true,
