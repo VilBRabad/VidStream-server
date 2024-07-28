@@ -18,7 +18,9 @@ app.use(express.json({limit: "16kb"}));
 
 
 import userRouter from "./routes/user.routes";
+import movieRouter from "./routes/movie.routes"
 
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/movie", movieRouter);
 
 export {app};
