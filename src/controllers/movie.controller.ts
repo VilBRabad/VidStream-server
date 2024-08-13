@@ -81,22 +81,33 @@ const getMovieById = asyncHandler(async (req: Request, res: Response) => {
 })
 
 
-const getMoviesByGenreFilters = asyncHandler(async (req: Request, res: Response)=>{
-    const {genres, page='1', limit='10'} = req.query;
+const allGenres = [
+    "Romance", "Drama", "Action", "Comedy", "Biography", "Sport", "Music", "Sci-Fi", "Crime", "Thriller", "History", "Adventure", "War", "Horror", "Family", "Fantasy"
+]
 
-    const genreArray: string[] = typeof genres === 'string' ? genres.split(","): [];
+const getMoviesByGenreFilters = asyncHandler(async (req: Request, res: Response)=>{
+    const {genre, page='1', limit='15'} = req.query;
+
+    const arr: string[] = typeof genre === 'string' ? genre.split(","): [];
     const pageNumber = parseInt(page as string, 10);
     const limitNumber = parseInt(limit as string, 10);
 
+
+    const genreArray = arr.filter((gen)=> allGenres.includes(gen));
+
+    // console.log(genreArray);
     // console.log(genreArray, genres);
 
     const movies = await Movie.aggregate([
         {
-            $match: genres? {
+            $match: genre? {
                 genre: {
                     $in: genreArray
                 }
             }: {}
+        },
+        {
+            $sort: {rating: -1}
         },
         {
             $facet: {
@@ -104,7 +115,6 @@ const getMoviesByGenreFilters = asyncHandler(async (req: Request, res: Response)
                 data: [
                     { $skip: (pageNumber-1)*limitNumber },
                     { $limit: limitNumber },
-                    { $sort: {rating: -1} }
                 ]
             }
         },
@@ -125,9 +135,53 @@ const getMoviesByGenreFilters = asyncHandler(async (req: Request, res: Response)
     ]);
 
     const moviesData = {currentPage: pageNumber, ...movies[0]};
-    console.log(moviesData);
+    // console.log(moviesData);
     res.status(200).json(
         new ApiResponse(200, moviesData)
+    );
+})
+
+
+const searchMovie = asyncHandler(async(req: Request, res: Response)=>{
+    const {title, page='1', limit='10'} = req.query;
+    
+    if(!title) throw new ApiError(400, "Search string not valid!");
+
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+
+    const movies = await Movie.aggregate([
+        {
+            $match: {
+                title: {
+                    $regex: new RegExp(title as string, 'i')
+                }
+            }
+        },
+        {
+            $skip: (pageNumber-1)*limitNumber
+        },
+        {
+            $limit: limitNumber
+        }
+    ]);
+
+    const totalCount = await Movie.countDocuments({
+        title: {
+            $regex: new RegExp(title as string, 'i')
+        }
+    });
+
+    const movieData = {
+        pageNumber,
+        totalCount,
+        movies,
+    }
+
+    console.log(movieData);
+
+    return res.status(201).json(
+        new ApiResponse(201, movieData)
     );
 })
 
@@ -145,5 +199,6 @@ export {
     getHomePageMovieInfo,
     getMovieById,
     getMoviesByGenreFilters,
+    searchMovie,
     testUrl
 };

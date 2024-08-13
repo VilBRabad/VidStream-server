@@ -9,6 +9,8 @@ const auth_middleware_1 = __importDefault(require("../middlewares/auth.middlewar
 const router = (0, express_1.Router)();
 router.post("/register", user_controller_1.registerUser);
 router.post("/login", user_controller_1.loginUser);
+router.post("/send-reset-link", user_controller_1.resetPasswordLinkGenerator);
+router.post("/reset-password", user_controller_1.resetPassword);
 router.get("/logout", auth_middleware_1.default, user_controller_1.logOutUser);
 router.get("/verifyJwt", auth_middleware_1.default, user_controller_1.testJWTAuth);
 exports.default = router;

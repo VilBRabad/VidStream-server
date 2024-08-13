@@ -8,6 +8,7 @@ export interface IUser extends Document {
   watchHistory?: mongoose.Types.ObjectId[];
   watchList?: mongoose.Types.ObjectId[];
   refreshToken?: string;
+  resetToken?: string;
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): Promise<string>;
   generateRefreshToken(): Promise<string>;
@@ -40,6 +41,9 @@ const userSchema = new mongoose.Schema<IUser>({
   refreshToken: {
     type: String,
   },
+  resetToken: {
+    type: String,
+  }
 }, { timestamps: true });
 
 
