@@ -2,6 +2,7 @@ class ApiError extends Error{
     statusCode: number;
     data: null;
     errors: never[];
+    message: string;
     
     constructor(
        statusCode: number,

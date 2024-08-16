@@ -15,4 +15,5 @@ router.get("/movies", getMoviesByGenreFilters);
 router.get("/search", searchMovie);
 router.get("/test/movie", testUrl);
 
+
 export default router;

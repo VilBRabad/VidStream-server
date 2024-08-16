@@ -17,10 +17,12 @@ const verifyJWT = asyncHandler(async(req:Request, res:Response, next: NextFuncti
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtInterface;
 
+    if(!decodedToken) throw new ApiError(402, "Un-authorized request!");
     // console.log(decodedToken._id);
     const user = await User.findOne({_id: decodedToken._id});
-    if(!user) throw new ApiError(401, "Unable to find user, Please login again..");
+    if(!user) throw new ApiError(402, "Unable to find user, Please login again..");
 
+    req.user = user;
     next();
 })
 

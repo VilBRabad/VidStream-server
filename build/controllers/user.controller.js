@@ -12,13 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testJWTAuth = exports.resetPassword = exports.resetPasswordLinkGenerator = exports.logOutUser = exports.loginUser = exports.registerUser = void 0;
+exports.testJWTAuth = exports.resetPassword = exports.getWatchlist = exports.addToWatchList = exports.resetPasswordLinkGenerator = exports.logOutUser = exports.loginUser = exports.registerUser = void 0;
 const ApiError_1 = require("../utils/ApiError");
 const AsyncHandler_1 = require("../utils/AsyncHandler");
 const user_model_1 = require("../models/user.model");
 const ApiResponse_1 = require("../utils/ApiResponse");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const movie_model_1 = require("../models/movie.model");
+const mongoose_1 = __importDefault(require("mongoose"));
 const options = {
     httpOnly: true,
     secure: true,
@@ -66,10 +68,12 @@ const loginUser = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     if (!isPasswordValid)
         throw new ApiError_1.ApiError(402, "Invalid Passwoord!");
     const { accessToken, refreshToken } = yield generateAccessRefreshToken(existUser);
-    const user = {
-        _id: existUser._id,
-        email: existUser.email,
-    };
+    // const user = {
+    //     _id: existUser._id,
+    //     email: existUser.email,
+    // };
+    const userInDb = yield user_model_1.User.findById(existUser._id).select("-password -refreshToken -resetToken");
+    const user = userInDb ? userInDb : {};
     return res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
@@ -189,6 +193,37 @@ const resetPassword = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(v
     return res.status(200).json(new ApiResponse_1.ApiResponse(200, {}, "Password reset successfully"));
 }));
 exports.resetPassword = resetPassword;
+const addToWatchList = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { movieId } = req.body;
+    const user = req.user;
+    console.log(movieId);
+    if (!movieId)
+        throw new ApiError_1.ApiError(400, "Invalid movie details");
+    const movie = yield movie_model_1.Movie.findOne({ _id: movieId });
+    if (!movie)
+        throw new ApiError_1.ApiError(404, "Movie not found");
+    if (!user)
+        throw new ApiError_1.ApiError(401, "Please login in again");
+    if ((_a = user.watchList) === null || _a === void 0 ? void 0 : _a.includes(movieId))
+        throw new ApiError_1.ApiError(405, "Movie already added");
+    user.watchList.push(new mongoose_1.default.Types.ObjectId(movie._id));
+    user.save({ validateBeforeSave: false });
+    // console.log(user);
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, movie));
+}));
+exports.addToWatchList = addToWatchList;
+const getWatchlist = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.user;
+    // console.log(user);
+    if (!user)
+        throw new ApiError_1.ApiError(402, "Please login again!");
+    const watchList = user.watchList;
+    const movies = yield movie_model_1.Movie.find({ _id: { $in: watchList } });
+    // console.log(movies);
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, movies));
+}));
+exports.getWatchlist = getWatchlist;
 //! JWT Verification Test Handler
 const testJWTAuth = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

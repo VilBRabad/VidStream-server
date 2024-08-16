@@ -13,4 +13,6 @@ router.post("/send-reset-link", user_controller_1.resetPasswordLinkGenerator);
 router.post("/reset-password", user_controller_1.resetPassword);
 router.get("/logout", auth_middleware_1.default, user_controller_1.logOutUser);
 router.get("/verifyJwt", auth_middleware_1.default, user_controller_1.testJWTAuth);
+router.post("/add-to-watchlist", auth_middleware_1.default, user_controller_1.addToWatchList);
+router.get("/get-watchlists", auth_middleware_1.default, user_controller_1.getWatchlist);
 exports.default = router;

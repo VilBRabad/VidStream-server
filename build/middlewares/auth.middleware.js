@@ -22,10 +22,13 @@ const verifyJWT = (0, AsyncHandler_1.asyncHandler)((req, res, next) => __awaiter
     if (!token)
         throw new ApiError_1.ApiError(402, "Un-authorized request!");
     const decodedToken = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    if (!decodedToken)
+        throw new ApiError_1.ApiError(402, "Un-authorized request!");
     // console.log(decodedToken._id);
     const user = yield user_model_1.User.findOne({ _id: decodedToken._id });
     if (!user)
-        throw new ApiError_1.ApiError(401, "Unable to find user, Please login again..");
+        throw new ApiError_1.ApiError(402, "Unable to find user, Please login again..");
+    req.user = user;
     next();
 }));
 exports.default = verifyJWT;

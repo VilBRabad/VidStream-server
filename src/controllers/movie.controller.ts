@@ -4,6 +4,7 @@ import { Movie } from "../models/movie.model";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
+import { User } from "../models/user.model";
 
 const getHomePageMovieInfo = asyncHandler(async (req: Request, res: Response) => {
     const topFiveMovie = await Movie.aggregate([
@@ -178,7 +179,7 @@ const searchMovie = asyncHandler(async(req: Request, res: Response)=>{
         movies,
     }
 
-    console.log(movieData);
+    // console.log(movieData);
 
     return res.status(201).json(
         new ApiResponse(201, movieData)

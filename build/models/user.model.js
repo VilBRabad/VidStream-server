@@ -31,13 +31,13 @@ const userSchema = new mongoose_1.default.Schema({
     watchHistory: [
         {
             type: mongoose_1.default.Types.ObjectId,
-            ref: "Video",
+            ref: "Movie",
         },
     ],
     watchList: [
         {
             type: mongoose_1.default.Types.ObjectId,
-            ref: "Video",
+            ref: "Movie",
         },
     ],
     refreshToken: {

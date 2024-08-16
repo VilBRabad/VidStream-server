@@ -5,6 +5,8 @@ import { IUser, User } from "../models/user.model";
 import { ApiResponse } from "../utils/ApiResponse";
 import nodemailer from "nodemailer"
 import jwt, {JwtPayload} from "jsonwebtoken";
+import { Movie } from "../models/movie.model";
+import mongoose from "mongoose";
 
 interface userInformation{
     firstName: string;
@@ -75,10 +77,13 @@ const loginUser = asyncHandler(async(req:Request, res: Response)=>{
 
     const {accessToken, refreshToken} = await generateAccessRefreshToken(existUser);
 
-    const user = {
-        _id: existUser._id,
-        email: existUser.email,
-    };
+    // const user = {
+    //     _id: existUser._id,
+    //     email: existUser.email,
+    // };
+
+    const userInDb = await User.findById(existUser._id).select("-password -refreshToken -resetToken");
+    const user = userInDb?userInDb:{};
 
     return res.status(200)
     .cookie("accessToken", accessToken, options)
@@ -229,6 +234,50 @@ const resetPassword = asyncHandler(async(req:Request, res:Response)=>{
 })
 
 
+const addToWatchList = asyncHandler(async(req:Request, res:Response)=>{
+    const {movieId} = req.body;
+    const user = req.user;
+
+    console.log(movieId);
+    
+    if(!movieId) throw new ApiError(400, "Invalid movie details");
+
+    const movie = await Movie.findOne({_id: movieId});
+
+    if(!movie) throw new ApiError(404, "Movie not found");
+    if(!user) throw new ApiError(401, "Please login in again");
+    
+    if(user.watchList?.includes(movieId)) throw new ApiError(405, "Movie already added");
+
+    (user.watchList as mongoose.Types.ObjectId[]).push(new mongoose.Types.ObjectId(movie._id));
+    user.save({validateBeforeSave: false});
+
+    // console.log(user);
+
+    return res.status(200).json(
+        new ApiResponse(200, movie)
+    )
+})
+
+
+const getWatchlist = asyncHandler(async(req:Request, res:Response)=>{
+    const user = req.user;
+    // console.log(user);
+
+    if(!user) throw new ApiError(402, "Please login again!");
+
+    const watchList = user.watchList;
+
+    const movies = await Movie.find({_id : {$in: watchList}});
+
+    // console.log(movies);
+
+    return res.status(200).json(
+        new ApiResponse(200, movies)
+    )
+})
+
+
 //! JWT Verification Test Handler
 const testJWTAuth = asyncHandler(async(req:Request, res:Response)=>{
     try {
@@ -241,5 +290,14 @@ const testJWTAuth = asyncHandler(async(req:Request, res:Response)=>{
 })
 
 
-export { registerUser, loginUser, logOutUser, resetPasswordLinkGenerator, resetPassword, testJWTAuth };
+export { 
+    registerUser, 
+    loginUser, 
+    logOutUser, 
+    resetPasswordLinkGenerator, 
+    addToWatchList, 
+    getWatchlist, 
+    resetPassword, 
+    testJWTAuth 
+};
 
