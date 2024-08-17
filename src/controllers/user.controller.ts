@@ -250,7 +250,7 @@ const addToWatchList = asyncHandler(async(req:Request, res:Response)=>{
     if(user.watchList?.includes(movieId)) throw new ApiError(405, "Movie already added");
 
     (user.watchList as mongoose.Types.ObjectId[]).push(new mongoose.Types.ObjectId(movie._id));
-    user.save({validateBeforeSave: false});
+    await user.save({validateBeforeSave: false});
 
     // console.log(user);
 
@@ -278,6 +278,25 @@ const getWatchlist = asyncHandler(async(req:Request, res:Response)=>{
 })
 
 
+const removeFromWatchlist = asyncHandler(async(req:Request, res:Response)=>{
+    const {movieId} = req.body;
+    const user = req.user;
+
+    if(!movieId) throw new ApiError(400, "Invalid movie id!");
+    
+    if(!user) throw new ApiError(402, "Un-authorized request");
+    
+    const movie = await Movie.findById(movieId);  
+    if(!movie) throw new ApiError(400, "Invalid movie id!");
+
+    user.watchList = user.watchList?.filter((mov)=> mov._id.toString() !== movie._id.toString());
+    await user.save({validateBeforeSave: false});
+
+    return res.status(200).json(
+        new ApiResponse(200, movie)
+    )
+})
+
 //! JWT Verification Test Handler
 const testJWTAuth = asyncHandler(async(req:Request, res:Response)=>{
     try {
@@ -298,6 +317,7 @@ export {
     addToWatchList, 
     getWatchlist, 
     resetPassword, 
+    removeFromWatchlist,
     testJWTAuth 
 };
 

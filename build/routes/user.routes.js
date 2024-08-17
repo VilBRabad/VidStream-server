@@ -15,4 +15,5 @@ router.get("/logout", auth_middleware_1.default, user_controller_1.logOutUser);
 router.get("/verifyJwt", auth_middleware_1.default, user_controller_1.testJWTAuth);
 router.post("/add-to-watchlist", auth_middleware_1.default, user_controller_1.addToWatchList);
 router.get("/get-watchlists", auth_middleware_1.default, user_controller_1.getWatchlist);
+router.post("/remove-from-watchlists", auth_middleware_1.default, user_controller_1.removeFromWatchlist);
 exports.default = router;

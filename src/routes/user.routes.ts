@@ -7,7 +7,8 @@ import {
     resetPassword, 
     testJWTAuth, 
     addToWatchList, 
-    getWatchlist 
+    getWatchlist,
+    removeFromWatchlist
 } from "../controllers/user.controller"
 import verifyJWT from "../middlewares/auth.middleware";
 
@@ -23,5 +24,6 @@ router.get("/logout", verifyJWT, logOutUser);
 router.get("/verifyJwt", verifyJWT, testJWTAuth);
 router.post("/add-to-watchlist", verifyJWT, addToWatchList);
 router.get("/get-watchlists", verifyJWT, getWatchlist);
+router.post("/remove-from-watchlists", verifyJWT, removeFromWatchlist);
 
 export default router;

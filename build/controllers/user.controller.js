@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testJWTAuth = exports.resetPassword = exports.getWatchlist = exports.addToWatchList = exports.resetPasswordLinkGenerator = exports.logOutUser = exports.loginUser = exports.registerUser = void 0;
+exports.testJWTAuth = exports.removeFromWatchlist = exports.resetPassword = exports.getWatchlist = exports.addToWatchList = exports.resetPasswordLinkGenerator = exports.logOutUser = exports.loginUser = exports.registerUser = void 0;
 const ApiError_1 = require("../utils/ApiError");
 const AsyncHandler_1 = require("../utils/AsyncHandler");
 const user_model_1 = require("../models/user.model");
@@ -208,7 +208,7 @@ const addToWatchList = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(
     if ((_a = user.watchList) === null || _a === void 0 ? void 0 : _a.includes(movieId))
         throw new ApiError_1.ApiError(405, "Movie already added");
     user.watchList.push(new mongoose_1.default.Types.ObjectId(movie._id));
-    user.save({ validateBeforeSave: false });
+    yield user.save({ validateBeforeSave: false });
     // console.log(user);
     return res.status(200).json(new ApiResponse_1.ApiResponse(200, movie));
 }));
@@ -224,6 +224,22 @@ const getWatchlist = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     return res.status(200).json(new ApiResponse_1.ApiResponse(200, movies));
 }));
 exports.getWatchlist = getWatchlist;
+const removeFromWatchlist = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { movieId } = req.body;
+    const user = req.user;
+    if (!movieId)
+        throw new ApiError_1.ApiError(400, "Invalid movie id!");
+    if (!user)
+        throw new ApiError_1.ApiError(402, "Un-authorized request");
+    const movie = yield movie_model_1.Movie.findById(movieId);
+    if (!movie)
+        throw new ApiError_1.ApiError(400, "Invalid movie id!");
+    user.watchList = (_a = user.watchList) === null || _a === void 0 ? void 0 : _a.filter((mov) => mov._id.toString() !== movie._id.toString());
+    yield user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, movie));
+}));
+exports.removeFromWatchlist = removeFromWatchlist;
 //! JWT Verification Test Handler
 const testJWTAuth = (0, AsyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
